@@ -1,0 +1,951 @@
+openapi: 3.0.0
+info:
+  title: Invenio
+  version: '1.0'
+  contact:
+    name: Support
+    email: support@qwyk.io
+  license:
+    name: Proprietary
+servers:
+  - url: 'https://eu1-gateway.invenio.qwyk.io'
+    description: EU1
+paths:
+  /jwt/api-token-auth:
+    post:
+      summary: Authenticate and Request a JWT
+      operationId: Authenticate
+      description: ''
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+              required:
+                - username
+                - password
+            examples:
+              Example:
+                value:
+                  username: USERNAME
+                  password: PASSWORD
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  expiry:
+                    type: string
+              examples:
+                Example:
+                  value:
+                    token: TOKEN
+                    expiry: '2019-08-26T11:45:33+00:00'
+      security: []
+      tags:
+        - Authentication
+      parameters:
+        - schema:
+            type: string
+            default: application/json
+            example: application/json
+          in: header
+          name: Content-Type
+          required: true
+  /schedules/v1/plugins:
+    get:
+      summary: Retrieve a list of available carriers
+      tags:
+        - Schedules
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Plugin'
+              examples:
+                Example:
+                  value:
+                    - hash: 5bec55d452....
+                      type: FCL
+                      carrier:
+                        code: ACL
+                        display_name: Atlantic Container Line
+                    - hash: 291e65....
+                      type: FCL
+                      carrier:
+                        code: ANL
+                        display_name: ANL
+                    - hash: cd545.......
+                      type: FCL
+                      carrier:
+                        code: APL
+                        display_name: APL
+          headers:
+            X-Rate-Limit:
+              schema:
+                type: integer
+              description: Throttles limit
+            X-Rate-Remaining:
+              schema:
+                type: integer
+              description: Throttle rate remaining
+            X-Rate-Reset:
+              schema:
+                type: number
+              description: Throttle rate reset in
+        '401':
+          description: Unauthorized
+      operationId: get-schedules-v1-plugins
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - fcl
+              - lcl
+              - air
+            example: fcl
+          in: query
+          name: type
+          description: Type of carrier
+          required: true
+          explode: false
+  /schedules/v1/schedule:
+    post:
+      summary: Post a request for a single schedule
+      operationId: post-schedules-v1-schedule
+      responses:
+        '200':
+          description: 'OK: a response for a synchronous request'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedules-Response'
+              examples:
+                Example (Sync):
+                  value:
+                    request_id: c617a40f-dae2-40ee-8e5a-e1bbf10f115c
+                    status: COMPLETED
+                    request:
+                      origin: SGSIN
+                      destination: AUBNE
+                      carrier_hash: 291e650f3a343ddef7b94183619f74d0
+                      date_from: '2020-05-28T00:25:43.511000Z'
+                      date_until: '2020-06-23T18:25:43.511000Z'
+                    results:
+                      - closing: '2020-05-31T00:00:00'
+                        type: FCL
+                        voyage: 0AB3TS1NL (022S)
+                        schedule_notes: null
+                        eta: '2020-06-13T00:00:00'
+                        cargo_available: null
+                        service: AAX2
+                        origin: SGSIN
+                        etd: '2020-06-02T00:00:00'
+                        vessel: CMA CGM BELLINI
+                        notes: null
+                        ocean_carrier: null
+                        destination: AUBNE
+                        vessel_info:
+                          mmsi: 248402000
+                          vessel_name: CMA CGM BELLINI
+                          imo: 9280598
+                        legs:
+                          - ident: CMA CGM BELLINI 0AB3TS1NL (022S)
+                            id: 0
+                            vessel_info:
+                              mmsi: 248402000
+                              vessel_name: CMA CGM BELLINI
+                              imo: 9280598
+                            eta: '2020-06-13T00:00:00'
+                            service: AAX2
+                            destination: AUBNE
+                            origin: SGSIN
+                            etd: '2020-06-02T00:00:00'
+                            voyage: 0AB3TS1NL (022S)
+                            notes: null
+                            vessel: CMA CGM BELLINI
+                        origin_via: null
+                        destination_via: null
+                        closing_imo: null
+                        carrier:
+                          code: ANL
+                          display_name: ANL
+                    error: ''
+          headers:
+            X-Rate-Limit:
+              schema:
+                type: integer
+              description: Throttles limit
+            X-Rate-Remaining:
+              schema:
+                type: integer
+              description: Throttle rate remaining
+            X-Rate-Reset:
+              schema:
+                type: number
+              description: Throttle rate reset in
+        '202':
+          description: 'Accepted: a response for an asynchronous request'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedules-Response'
+              examples:
+                Example:
+                  value:
+                    request_id: 843eb0d1-7ba4-43db-9217-aca74756c78d
+                    status: PENDING
+                    request:
+                      origin: SGSIN
+                      destination: AUBNE
+                      carrier_hash: 291e650f3a343ddef7b94183619f74d0
+                      date_from: '2020-05-28T00:25:43.511000Z'
+                      date_until: '2020-06-23T18:25:43.511000Z'
+                    results: []
+                    error: null
+          headers:
+            X-Rate-Limit:
+              schema:
+                type: integer
+              description: Throttles limit
+            X-Rate-Remaining:
+              schema:
+                type: integer
+              description: Throttle rate remaining
+            X-Rate-Reset:
+              schema:
+                type: number
+              description: Throttle rate reset in
+      description: |-
+        This method allows for the synchronous or asynchronous (using the mode query parameter) retrieval of a carrier's schedule. Making this request, a process will be started on the server that collects the schedules. When running the process synchronously, your request will wait until the job has completed or until it times out (after 70 seconds.) When running the request asynchronously (recommended) you may retrieve the status and results using the `/schedule/{request_id}` endpoint (the `request_id` being the value provided in the `202` result body of this request.) When the status field in the returned body contains the value `PENDING`, the job has not yet completed and no results are available. When the value for the status field is `COMPLETED` or `FAILED` the final result is available and no further updates to the set are to be expected.
+
+        **Note that the cached resultset will expire after 300 seconds so your call must be made within this timeframe.**
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Single-Schedule-Request'
+            examples:
+              Example:
+                value:
+                  origin: SGSIN
+                  destination: AUBNE
+                  carrier_hash: 291e650f3a343ddef7b94183619f74d0
+                  date_from: '2019-10-26T00:25:43.511Z'
+                  date_until: '2019-11-26T18:25:43.511Z'
+        description: ''
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - sync
+              - async
+            example: sync
+            default: sync
+          in: query
+          name: mode
+          description: Whether to wait for completion of the request
+        - schema:
+            type: string
+            default: application/json
+            example: application/json
+          in: header
+          name: Content-Type
+          required: true
+      tags:
+        - Schedules
+    parameters: []
+  '/schedules/v1/schedule/{requestId}':
+    parameters:
+      - schema:
+          type: string
+          format: uuid
+        name: requestId
+        in: path
+        required: true
+        description: request_id returned in the original request
+    get:
+      summary: Get schedules results for a given single schedule request
+      tags:
+        - Schedules
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedules-Response'
+              examples:
+                Example: {}
+          headers:
+            X-Rate-Limit:
+              schema:
+                type: integer
+              description: Throttles limit
+            X-Rate-Remaining:
+              schema:
+                type: integer
+              description: Throttle rate remaining
+            X-Rate-Reset:
+              schema:
+                type: number
+              description: Throttle rate reset in
+      operationId: get-schedules-v1-schedule-requestId
+      description: 'Use this method to retrieve the results of an earlier made asynchronous request. When the status field in the returned body contains the value `PENDING`, the job has not yet completed and no results are available. When the value for the status field is `COMPLETED` or `FAILED` the final result is available and no further updates to the set are to be expected. You may call this method multiple times to retrieve its state, but note the requests get throttled. Observe the response headers to retrieve the throttle state.'
+  /schedules/v1/schedules:
+    post:
+      summary: Post a request for schedules of multiple carriers or products
+      operationId: post-schedules-v1-schedules
+      responses:
+        '202':
+          description: Accepted
+          headers:
+            X-Rate-Limit:
+              schema:
+                type: integer
+              description: Throttles limit
+            X-Rate-Remaining:
+              schema:
+                type: integer
+              description: Throttle rate remaining
+            X-Rate-Reset:
+              schema:
+                type: number
+              description: Throttle rate reset in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedules-Response'
+              examples:
+                Example:
+                  value:
+                    request_id: faef3a99-4c59-4e84-a7ad-9aa09d46d745
+                    status: PENDING
+                    request:
+                      origin: NLRTM
+                      destination: SGSIN
+                      scope:
+                        type: products
+                        keys:
+                          - fcl
+                          - lcl
+                      date_from: '2020-06-01T00:25:43.511000Z'
+                      date_until: '2020-08-23T18:25:43.511000Z'
+                      schema: simple
+                    results: []
+                    locations: []
+                    carriers: []
+                    routes: []
+                    expectedCarriers: 80
+      description: |-
+        Make a request for multiple carriers on a given tradelane, or for all carriers belonging to a certain product (FCL, LCL, Air). This method allows for the asynchronous retrieval of a parsed schedule set. Making this request, a process will be started on the server that collects the schedules and parses them to the schema. At any time you may retrieve the intermediate results using the `/schedules/{request_id}` endpoint (the `request_id` being the value provided in the `202` result body of this request.) When the status field in the returned body contains the value `PENDING`, intermediate results will be provided. When the value for the status field is `COMPLETED` or `FAILED` the final result is available and no further updates to the set are to be expected.
+
+        **Note that the cached resultset will expire after 300 seconds so your call must be made within this timeframe.**
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Multi-Schedules-Request'
+            examples:
+              Example (products scope):
+                value:
+                  origin: NLRTM
+                  destination: SGSIN
+                  scope:
+                    type: products
+                    keys:
+                      - fcl
+                      - lcl
+                  date_from: '2020-06-01T00:25:43.511Z'
+                  date_until: '2020-08-23T18:25:43.511Z'
+              Example (carriers scope):
+                value:
+                  origin: BEANR
+                  destination: USEWR
+                  scope:
+                    type: carriers
+                    keys:
+                      - 5bec55d452dbea99476cd51a1c821b8a
+                      - 291e650f3a343ddef7b94183619f74d0
+                  date_from: '2020-06-01T00:25:43.511Z'
+                  date_until: '2020-08-23T18:25:43.511Z'
+        description: ''
+      tags:
+        - Schedules
+      parameters:
+        - schema:
+            type: string
+            example: application/json
+            default: application/json
+          in: header
+          name: Content-Type
+          required: true
+    parameters: []
+  '/schedules/v1/schedules/{requestId}':
+    parameters:
+      - schema:
+          type: string
+          format: uuid
+        name: requestId
+        in: path
+        required: true
+        description: request_id returned in the original request
+    get:
+      summary: Get schedules results for a given multi-schedules request
+      tags:
+        - Schedules
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Rate-Limit:
+              schema:
+                type: integer
+              description: Throttles limit
+            X-Rate-Remaining:
+              schema:
+                type: integer
+              description: Throttle rate remaining
+            X-Rate-Reset:
+              schema:
+                type: number
+              description: Throttle rate reset in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedules-Response'
+              examples:
+                Example:
+                  value:
+                    request_id: 6752f6c3-a620-488d-8377-651e17f217fc
+                    status: COMPLETED
+                    request:
+                      origin: NLRTM
+                      destination: SGSIN
+                      scope:
+                        type: products
+                        keys:
+                          - fcl
+                          - lcl
+                      date_from: '2020-06-01T00:25:43.511000Z'
+                      date_until: '2020-08-23T18:25:43.511000Z'
+                      schema: simple
+                    results:
+                      - - service: CES
+                          origin: NLRTM
+                          etd: '2020-06-06T00:00:00'
+                          destination_via: MYPKG
+                          vessel_info: null
+                          ocean_carrier: null
+                          destination: SGSIN
+                          vessel: TRITON
+                          cargo_available: null
+                          type: FCL
+                          origin_via: null
+                          eta: '2020-06-26T00:00:00'
+                          legs:
+                            - eta: '2020-06-21T00:00:00'
+                              service: CES
+                              id: 0
+                              vessel: TRITON
+                              etd: '2020-06-06T00:00:00'
+                              vessel_info: null
+                              notes: 'Service: CES'
+                              destination: MYPKG
+                              origin: NLRTM
+                              ident: TRITON 0497-022E
+                              voyage: 0497-022E
+                            - eta: '2020-06-26T00:00:00'
+                              service: FME
+                              id: 0
+                              vessel: SUEZ CANAL
+                              etd: '2020-06-25T00:00:00'
+                              vessel_info:
+                                mmsi: 636092654
+                                vessel_name: SUEZ CANAL
+                                imo: 9230311
+                              notes: 'Service: FME'
+                              destination: SGSIN
+                              origin: MYPKG
+                              ident: SUEZ CANAL 20004E
+                              voyage: 20004E
+                          notes: null
+                          schedule_notes: null
+                          carrier:
+                            code: EVERGREEN
+                            display_name: Evergreen
+                          voyage: 0497-022E
+                          closing: '2020-06-03T09:00:00'
+                        - service: CES
+                          origin: NLRTM
+                          etd: '2020-06-20T00:00:00'
+                          destination_via: MYPKG
+                          vessel_info: null
+                          ocean_carrier: null
+                          destination: SGSIN
+                          vessel: TAURUS
+                          cargo_available: null
+                          type: FCL
+                          origin_via: null
+                          eta: '2020-07-13T00:00:00'
+                          legs:
+                            - eta: '2020-07-12T00:00:00'
+                              service: CES
+                              id: 0
+                              vessel: TAURUS
+                              etd: '2020-06-20T00:00:00'
+                              vessel_info: null
+                              notes: 'Service: CES'
+                              destination: MYPKG
+                              origin: NLRTM
+                              ident: TAURUS 0499-017E
+                              voyage: 0499-017E
+                            - eta: '2020-07-13T00:00:00'
+                              service: FME
+                              id: 0
+                              vessel: APL OREGON
+                              etd: '2020-07-13T00:00:00'
+                              vessel_info:
+                                mmsi: 248711000
+                                vessel_name: APL OREGON
+                                imo: 9532783
+                              notes: 'Service: FME'
+                              destination: SGSIN
+                              origin: MYPKG
+                              ident: APL OREGON 0FD0GE1MA
+                              voyage: 0FD0GE1MA
+                          notes: null
+                          schedule_notes: null
+                          carrier:
+                            code: EVERGREEN
+                            display_name: Evergreen
+                          voyage: 0499-017E
+                          closing: '2020-06-16T12:00:00'
+                      - RESULTS TRUNCATED
+                    locations: []
+                    carriers: []
+                    routes: []
+                    expectedCarriers: 80
+      operationId: get-schedules-v1-schedules-requestId
+      description: 'Use this method to retrieve the (intermediate) results of an earlier made request. When the status field in the returned body contains the value PENDING, intermediate results will be provided. When the value for the status field is COMPLETED or FAILED the final result is available and no further updates to the set are to be expected. When the job has not yet completed raw data will be parsed on request which may cause some additional latency, as the chained job becomes completed the parsed resuls will be served directly. You may call this method multiple times to provide partial result sets in your client, but note the requests get throttled. Observe the response headers to retrieve the throttle state.'
+components:
+  schemas:
+    Plugin:
+      title: Plugin
+      type: object
+      description: ''
+      properties:
+        hash:
+          type: string
+        type:
+          type: string
+        carrier:
+          type: object
+          required:
+            - code
+            - display_name
+          properties:
+            code:
+              type: string
+            display_name:
+              type: string
+      required:
+        - hash
+        - type
+        - carrier
+      x-examples:
+        Example:
+          hash: 5bec55d452....
+          type: FCL
+          carrier:
+            code: ACL
+            display_name: Atlantic Container Line
+      x-tags:
+        - Models
+        - Schedules
+    Single-Schedule-Request:
+      title: Single-Schedule-Request
+      type: object
+      x-tags:
+        - Models
+        - Schedules
+      properties:
+        origin:
+          type: string
+          minLength: 5
+          maxLength: 5
+          example: SGSIN
+          description: UN Location code
+          pattern: '^[A-Z0-9]{5}+'
+        destination:
+          type: string
+          example: AUBNE
+          minLength: 5
+          maxLength: 5
+          description: UN Location code
+          pattern: '^[A-Z0-9]{5}+'
+        carrier_hash:
+          type: string
+          description: 'Hash of the carrier, can be obtained from the `plugins` endpoint.'
+        date_from:
+          type: string
+          description: ISO 8601 DateTime
+        date_until:
+          type: string
+          description: ISO 8601 DateTime
+      required:
+        - origin
+        - destination
+        - carrier_hash
+        - date_from
+        - date_until
+      x-examples:
+        Example:
+          value:
+            origin: SGSIN
+            destination: AUBNE
+            carrier_hash: 291e650f3a343ddef7b94183619f74d0
+            date_from: '2019-10-26T00:25:43.511Z'
+            date_until: '2019-11-26T18:25:43.511Z'
+    Schedules-Response:
+      title: Schedules-Response
+      type: object
+      description: ''
+      x-tags:
+        - Models
+        - Schedules
+      properties:
+        request_id:
+          type: string
+        status:
+          type: string
+          enum:
+            - COMPLETED
+            - FAILED
+            - PENDING
+        request:
+          oneOf:
+            - $ref: '#/components/schemas/Single-Schedule-Request'
+            - $ref: '#/components/schemas/Multi-Schedules-Request'
+          description: Echos the original request body
+        results:
+          oneOf:
+            - description: Array of schedules (single)
+              items:
+                $ref: '#/components/schemas/Schedule'
+            - description: Array of array of schedules by carrier (multi)
+              items:
+                type: array
+                description: ''
+                items:
+                  $ref: '#/components/schemas/Schedule'
+          type: array
+        error:
+          type:
+            - string
+            - 'null'
+        locations:
+          type: array
+          deprecated: true
+          items: {}
+        carriers:
+          type: array
+          deprecated: true
+          items: {}
+        routes:
+          type: array
+          deprecated: true
+          items: {}
+        expectedCarriers:
+          type: integer
+          description: "Only present in multi-schedules response, indicates the number of carriers we'll attempt to request schedules from."
+      required:
+        - request_id
+        - status
+        - request
+        - results
+    Schedule:
+      title: Schedule
+      type: object
+      x-examples:
+        Example:
+          type: FCL
+          carrier:
+            code: ANL
+            display_name: ANL
+          vessel: CMA CGM BELLINI
+          voyage: 0AB3TS1NL (022S)
+          ocean_carrier: null
+          origin: SGSIN
+          origin_via: null
+          destination: AUBNE
+          destination_via: null
+          closing: '2020-05-31T00:00:00'
+          closing_imo: null
+          etd: '2020-06-02T00:00:00'
+          eta: '2020-06-13T00:00:00'
+          cargo_available: null
+          notes: null
+          service: AAX2
+          schedule_notes: null
+          vessel_info:
+            vessel_name: CMA CGM BELLINI
+            imo: 9280598
+            mmsi: 248402000
+          legs:
+            - id: 0
+              ident: CMA CGM BELLINI 0AB3TS1NL (022S)
+              vessel: CMA CGM BELLINI
+              voyage: 0AB3TS1NL (022S)
+              origin: SGSIN
+              destination: AUBNE
+              etd: '2020-06-02T00:00:00'
+              eta: '2020-06-13T00:00:00'
+              notes: null
+              service: AAX2
+              vessel_info:
+                vessel_name: CMA CGM BELLINI
+                imo: 9280598
+                mmsi: 248402000
+      description: ''
+      x-tags:
+        - Models
+        - Schedules
+      properties:
+        type:
+          type: string
+        carrier:
+          type: object
+          required:
+            - code
+            - display_name
+          properties:
+            code:
+              type: string
+            display_name:
+              type: string
+        vessel:
+          type: string
+        voyage:
+          type: string
+        ocean_carrier:
+          type:
+            - string
+            - 'null'
+          description: Used for LCL when actual ocean carrier is available
+        origin:
+          type: string
+        origin_via:
+          type: string
+          deprecated: true
+        destination:
+          type: string
+        destination_via:
+          type: string
+          deprecated: true
+        closing:
+          type:
+            - string
+            - 'null'
+          description: ISO 8601 DateTime
+        closing_imo:
+          type:
+            - string
+            - 'null'
+          description: ISO 8601 DateTime
+        etd:
+          type: string
+          description: ISO 8601 DateTime
+        eta:
+          type: string
+          description: ISO 8601 DateTime
+        cargo_available:
+          type:
+            - string
+            - 'null'
+          description: ISO 8601 DateTime
+        notes:
+          type:
+            - string
+            - 'null'
+        service:
+          type: string
+        schedule_notes:
+          type:
+            - string
+            - 'null'
+        vessel_info:
+          $ref: '#/components/schemas/Schedule-Vessel-Info'
+        legs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Schedule-Leg'
+      required:
+        - type
+        - carrier
+        - vessel
+        - voyage
+        - origin
+        - destination
+        - closing
+        - etd
+        - eta
+    Schedule-Leg:
+      title: Schedule-Leg
+      type: object
+      properties:
+        id:
+          type: integer
+        ident:
+          type: string
+        vessel:
+          type: string
+        voyage:
+          type: string
+        origin:
+          type: string
+        destination:
+          type: string
+        etd:
+          type: string
+        eta:
+          type: string
+        notes:
+          type: string
+        service:
+          type: string
+        vessel_info:
+          $ref: '#/components/schemas/Schedule-Vessel-Info'
+      required:
+        - id
+        - ident
+        - vessel
+        - voyage
+        - origin
+        - destination
+        - etd
+        - eta
+      x-tags:
+        - Models
+        - Schedules
+    Schedule-Vessel-Info:
+      title: Schedule-Vessel-Info
+      type: object
+      properties:
+        vessel_name:
+          type: string
+        imo:
+          type: integer
+        mmsi:
+          type:
+            - integer
+            - 'null'
+      x-tags:
+        - Models
+        - Schedules
+    Multi-Schedules-Request:
+      title: Multi-Schedules-Request
+      type: object
+      x-examples:
+        Example `Carriers` scope:
+          origin: BEANR
+          destination: USEWR
+          scope:
+            type: carriers
+            keys:
+              - 5bec55d452dbea99476cd51a1c821b8a
+              - 291e650f3a343ddef7b94183619f74d0
+          date_from: '2020-06-01T00:25:43.511Z'
+          date_until: '2020-08-23T18:25:43.511Z'
+        Example `Products` scope:
+          origin: NLRTM
+          destination: SGSIN
+          scope:
+            type: products
+            keys:
+              - fcl
+              - lcl
+          date_from: '2020-06-01T00:25:43.511Z'
+          date_until: '2020-08-23T18:25:43.511Z'
+      x-tags:
+        - Models
+        - Schedules
+      properties:
+        origin:
+          type: string
+          minLength: 5
+          maxLength: 5
+          pattern: '^[A-Z0-9]{5}+'
+          example: NLRTM
+          description: UN Location Code
+        destination:
+          type: string
+          pattern: '^[A-Z0-9]{5}+'
+          minLength: 5
+          maxLength: 5
+          example: SGSIN
+          description: UN Location Code
+        scope:
+          type: object
+          required:
+            - type
+            - keys
+          properties:
+            type:
+              type: string
+              enum:
+                - products
+                - carriers
+            keys:
+              oneOf:
+                - description: An array of products
+                  minItems: 2
+                  uniqueItems: true
+                  items:
+                    type: string
+                    enum:
+                      - fcl
+                      - lcl
+                      - air
+                    example: air
+                - minItems: 1
+                  description: An array of carrier hashes
+                  uniqueItems: true
+                  items:
+                    type: string
+                    format: uuid
+              type: array
+        date_from:
+          type: string
+          description: ISO 8601 DateTime
+        date_until:
+          type: string
+          description: ISO 8601 DateTime
+      required:
+        - origin
+        - destination
+        - scope
+        - date_from
+        - date_until
+  securitySchemes:
+    JSON Web Token:
+      name: Authorization
+      type: apiKey
+      in: header
+      description: 'Provide the header as Authorization: JWT {{ your token }}'
+security:
+  - JSON Web Token: []
