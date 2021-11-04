@@ -1,0 +1,397 @@
+{
+  "openapi": "3.0.0",
+  "servers": [
+    {
+      "url": "https://schedules.qwyk.io/api/schedules/c",
+      "description": "Production server"
+    }
+  ],
+  "info": {
+    "description": "\n# About\nThe QwykSchedules API is an HTTP API served by the QwykSchedules web appproviding endpoints to interact with your schedules that are generated based on your routing guide setup.\n \n # Versioning\n\nThe API uses an open schema model, which means server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break.\n\nThis documentation is for version 1.0 of the API. ",
+    "version": "1.0",
+    "title": "QwykSchedules API",
+    "contact": {
+      "email": "api.support@qwyk.io"
+    },
+    "x-logo": {
+      "url": "http://cdn.qwyk.io/images/newlogos/PNG/logoshaded.png",
+      "backgroundColor": "#097AFF"
+    }
+  },
+  "tags": [
+    {
+      "name": "Locations",
+      "description": "Query the locations database"
+    },
+    {
+      "name": "Schedules",
+      "description": "Obtain a tradelane schedule"
+    }
+  ],
+  "paths": {
+    "/{organization_id}/{product}/locations/{segment}/{query}": {
+      "get": {
+        "operationId": "queryLocations",
+        "tags": [
+          "Locations"
+        ],
+        "summary": "Get product / segment locations",
+        "description": "",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organization_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "Your assigned organization ID"
+          },
+          {
+            "in": "path",
+            "name": "product",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "air",
+                "fcl",
+                "lcl",
+                "csl"
+              ]
+            },
+            "required": true,
+            "description": "The product you wish to query locations for"
+          },
+          {
+            "in": "path",
+            "name": "segment",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "origin",
+                "destination"
+              ]
+            },
+            "required": true,
+            "description": "The segment (origin/destination) you wish to query locations for"
+          },
+          {
+            "in": "path",
+            "name": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "Your search query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of available locations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Location"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JSONWebToken": []
+          }
+        ]
+      }
+    },
+    "/{organization_id}/{product}/{origin}/{destination}": {
+      "get": {
+        "operationId": "querySchedules",
+        "tags": [
+          "Schedules"
+        ],
+        "summary": "Send a schedule request",
+        "description": "This method allows for the synchronous retrieval of your schedule for a given product and tradelane.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organization_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "description": "Your assigned organization ID"
+          },
+          {
+            "in": "path",
+            "name": "product",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "air",
+                "fcl",
+                "lcl",
+                "csl"
+              ]
+            },
+            "required": true,
+            "description": "The product you wish to query schedules for"
+          },
+          {
+            "in": "path",
+            "name": "origin",
+            "schema": {
+              "type": "string",
+              "format": "locode"
+            },
+            "required": true,
+            "description": "The origin to query schedules from"
+          },
+          {
+            "in": "path",
+            "name": "destination",
+            "schema": {
+              "type": "string",
+              "format": "locode"
+            },
+            "required": true,
+            "description": "The destination to query schedules to"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response with array of schedules",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Schedule"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        },
+        "security": [
+          {
+            "JSONWebToken": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Carrier": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "display_name": {
+            "type": "string"
+          }
+        }
+      },
+      "Leg": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "ident": {
+            "type": "string"
+          },
+          "carrier": {
+            "$ref": "#/components/schemas/Carrier"
+          },
+          "origin": {
+            "type": "string"
+          },
+          "destination": {
+            "type": "string"
+          },
+          "etd": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "eta": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "vesselinfo": {
+            "$ref": "#/components/schemas/VesselInfo"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "precarriage",
+              "fcl",
+              "lcl",
+              "air",
+              "oncarriage"
+            ]
+          }
+        }
+      },
+      "Location": {
+        "type": "object",
+        "properties": {
+          "locode": {
+            "type": "string",
+            "format": "unlocode"
+          },
+          "name": {
+            "type": "string"
+          },
+          "display_name": {
+            "type": "string"
+          },
+          "country_name": {
+            "type": "string"
+          },
+          "iata": {
+            "type": "string",
+            "format": "iata",
+            "nullable": true
+          },
+          "is_port": {
+            "type": "boolean"
+          },
+          "is_major_port": {
+            "type": "boolean"
+          },
+          "is_airport": {
+            "type": "boolean"
+          },
+          "is_major_airport": {
+            "type": "boolean"
+          },
+          "sort": {
+            "type": "integer",
+            "description": "Descending sorting key based on how likely the query is to match the result"
+          }
+        }
+      },
+      "Product": {
+        "type": "string",
+        "enum": [
+          "AIR",
+          "FCL",
+          "LCL"
+        ]
+      },
+      "Schedule": {
+        "type": "object",
+        "properties": {
+          "carrier": {
+            "$ref": "#/components/schemas/Carrier"
+          },
+          "vessel": {
+            "type": "string"
+          },
+          "voyage": {
+            "type": "string"
+          },
+          "closing": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "closing_doc": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "closing_imo": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "etd": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "eta": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "origin": {
+            "type": "string",
+            "format": "unlocode"
+          },
+          "origin_is_precarriage": {
+            "type": "boolean"
+          },
+          "origin_via": {
+            "type": "string",
+            "format": "unlocode",
+            "nullable": true
+          },
+          "destination": {
+            "type": "string",
+            "format": "unlocode"
+          },
+          "destination_via": {
+            "type": "string",
+            "format": "unlocode",
+            "nullable": true
+          },
+          "legs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Leg"
+            }
+          },
+          "service": {
+            "type": "string",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "VesselInfo": {
+        "type": "object",
+        "nullable": true
+      }
+    },
+    "responses": {
+      "NotFound": {
+        "description": "Not Found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "JSONWebToken": {
+        "description": "Authentication credentials need to be passed as a JWT token in the Authorization header for all requests. Your tokens are self-issued through the App.\n",
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "Bearer token"
+      }
+    }
+  }
+}
